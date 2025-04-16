@@ -1,49 +1,12 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BarChart, Users, MessageSquare, PlusCircle, Zap, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth-context';
 import { getAllCustomers, getCampaigns } from '@/lib/db-service';
 import DashboardLayout from '@/components/layout/dashboard-layout';
-
-// Simple counter animation hook
-const useCountAnimation = (end: number, duration: number = 1500) => {
-  const [count, setCount] = useState(0);
-  const countRef = useRef(0);
-  const frameRef = useRef(0);
-  const startTimeRef = useRef(0);
-
-  useEffect(() => {
-    if (end > 0) {
-      const animate = (timestamp: number) => {
-        if (!startTimeRef.current) startTimeRef.current = timestamp;
-        const progress = timestamp - startTimeRef.current;
-        const percentage = Math.min(progress / duration, 1);
-        
-        countRef.current = Math.floor(percentage * end);
-        setCount(countRef.current);
-        
-        if (percentage < 1) {
-          frameRef.current = requestAnimationFrame(animate);
-        } else {
-          setCount(end); // Ensure final value is exact
-        }
-      };
-      
-      frameRef.current = requestAnimationFrame(animate);
-    }
-    
-    return () => {
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
-    };
-  }, [end, duration]);
-  
-  return count;
-};
 
 export default function DashboardPage() {
   const { user, salonId, loading } = useAuth();
@@ -55,11 +18,8 @@ export default function DashboardPage() {
     customerDue: 0,
   });
   
-  const [isStatsLoaded, setIsStatsLoaded] = useState(false);
-  const animatedCustomers = useCountAnimation(isStatsLoaded ? stats.totalCustomers : 0);
-  const animatedCampaigns = useCountAnimation(isStatsLoaded ? stats.campaigns : 0);
-  const animatedMessages = useCountAnimation(isStatsLoaded ? stats.messageSent : 0);
-  const animatedDue = useCountAnimation(isStatsLoaded ? stats.customerDue : 0);
+  // Remove animations and use direct values
+  const { totalCustomers, campaigns, messageSent, customerDue } = stats;
 
   useEffect(() => {
     // Redirect if not logged in and not loading
@@ -76,7 +36,7 @@ export default function DashboardPage() {
           const customers = await getAllCustomers(salonId);
           
           // Get campaigns
-          const campaigns = await getCampaigns(salonId);
+          const campaignsData = await getCampaigns(salonId);
           
           // Calculate customers due for follow-up based on campaign criteria and last visit
           const now = new Date();
@@ -95,16 +55,11 @@ export default function DashboardPage() {
           // Set stats
           setStats({
             totalCustomers: customers.length,
-            campaigns: campaigns.filter(campaign => campaign.active).length,
+            campaigns: campaignsData.filter(campaign => campaign.active).length,
             // This would come from a real stats system, mocked for now
-            messageSent: campaigns.reduce((total, campaign) => (campaign.last_run ? total + Math.floor(Math.random() * 5) + 1 : total), 0),
+            messageSent: campaignsData.reduce((total, campaign) => (campaign.last_run ? total + Math.floor(Math.random() * 5) + 1 : total), 0),
             customerDue: customersDue,
           });
-          
-          // Delay setting isStatsLoaded to true to ensure animation starts after render
-          setTimeout(() => {
-            setIsStatsLoaded(true);
-          }, 200);
         } catch (error) {
           console.error('Error fetching dashboard data:', error);
         }
@@ -142,7 +97,7 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{animatedCustomers}</div>
+              <div className="text-3xl font-bold">{totalCustomers.toLocaleString()}</div>
               <p className="text-xs text-gray-500">
                 Clients in your database
               </p>
@@ -151,52 +106,67 @@ export default function DashboardPage() {
         </div>
 
         {/* Active Campaigns Card */}
-        <Card className="border rounded-lg shadow-sm hover:shadow transition-all bg-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Campaigns</CardTitle>
-            <div className="h-6 w-6 text-gray-400">
-              <CheckCircle className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{animatedCampaigns}</div>
-            <p className="text-xs text-gray-500">
-              Running reminder campaigns
-            </p>
-          </CardContent>
-        </Card>
+        <div 
+          className="cursor-pointer hover:scale-105 transition-all duration-200 group"
+          onClick={() => router.push('/dashboard/campaigns')}
+        >
+          <Card className="border rounded-lg shadow-sm hover:shadow transition-all bg-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Campaigns</CardTitle>
+              <div className="h-6 w-6 text-gray-400">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{campaigns.toLocaleString()}</div>
+              <p className="text-xs text-gray-500">
+                Running reminder campaigns
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Messages Sent Card */}
-        <Card className="border rounded-lg shadow-sm hover:shadow transition-all bg-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Messages Sent</CardTitle>
-            <div className="h-6 w-6 text-gray-400">
-              <MessageSquare className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{animatedMessages}</div>
-            <p className="text-xs text-gray-500">
-              WhatsApp reminders sent
-            </p>
-          </CardContent>
-        </Card>
+        <div 
+          className="cursor-pointer hover:scale-105 transition-all duration-200 group"
+          onClick={() => router.push('/dashboard/campaigns')}
+        >
+          <Card className="border rounded-lg shadow-sm hover:shadow transition-all bg-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Messages Sent</CardTitle>
+              <div className="h-6 w-6 text-gray-400">
+                <MessageSquare className="h-5 w-5" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{messageSent.toLocaleString()}</div>
+              <p className="text-xs text-gray-500">
+                WhatsApp reminders sent
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Customers Due Card */}
-        <Card className="border rounded-lg shadow-sm hover:shadow transition-all bg-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Customers Due</CardTitle>
-            <div className="h-6 w-6 text-gray-400">
-              <AlertCircle className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{animatedDue}</div>
-            <p className="text-xs text-gray-500">
-              Clients due for follow-up
-            </p>
-          </CardContent>
-        </Card>
+        <div 
+          className="cursor-pointer hover:scale-105 transition-all duration-200 group"
+          onClick={() => router.push('/dashboard/customers?filter=overdue')}
+        >
+          <Card className="border rounded-lg shadow-sm hover:shadow transition-all bg-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Customers Due</CardTitle>
+              <div className="h-6 w-6 text-gray-400">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{customerDue.toLocaleString()}</div>
+              <p className="text-xs text-gray-500">
+                Clients due for follow-up
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="mt-8">
