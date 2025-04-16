@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { Loader2, Menu, X } from 'lucide-react';
@@ -298,15 +299,17 @@ export default function Home() {
                 </div>
                 
                 <div className="relative z-0 shadow-xl rounded-xl overflow-hidden bg-white">
-                  <img 
+                  <Image 
                     src="/salon-illustration.png" 
                     alt="Salon stylist cutting client's hair"
+                    width={600}
+                    height={400}
                     className="w-full h-auto rounded-xl"
                     style={{
                       objectFit: 'cover',
                       objectPosition: 'center'
                     }}
-                    loading="eager"
+                    priority
                   />
                 </div>
               </div>
