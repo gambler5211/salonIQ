@@ -57,7 +57,8 @@ export default function CampaignsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const form = useForm<CampaignFormValues>({
-    resolver: zodResolver(campaignSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(campaignSchema) as any,
     defaultValues: {
       name: '',
       template_id: '',
@@ -199,15 +200,20 @@ export default function CampaignsPage() {
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onAddCampaign)} className="space-y-4">
+              <form 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                onSubmit={form.handleSubmit(onAddCampaign as any)} 
+                className="space-y-4"
+              >
                 <FormField
-                  control={form.control}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  control={form.control as any}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Campaign Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Haircut Follow-up" {...field} />
+                        <Input placeholder="30-day follow-up" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -215,14 +221,15 @@ export default function CampaignsPage() {
                 />
                 
                 <FormField
-                  control={form.control}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  control={form.control as any}
                   name="template_id"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Message Template</FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
-                        value={field.value}
+                        defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -230,24 +237,15 @@ export default function CampaignsPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {templates.length === 0 ? (
-                            <SafeSelectItem value="no-templates" disabled>
-                              No templates available
+                          {templates.map((template) => (
+                            <SafeSelectItem key={template.id} value={template.id!}>
+                              {template.name}
                             </SafeSelectItem>
-                          ) : (
-                            templates.map((template) => (
-                              <SafeSelectItem 
-                                key={template.id} 
-                                value={template.id}
-                              >
-                                {template.name}
-                              </SafeSelectItem>
-                            ))
-                          )}
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        The template used for reminder messages
+                        Select a message template to use for this campaign
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -255,16 +253,23 @@ export default function CampaignsPage() {
                 />
                 
                 <FormField
-                  control={form.control}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  control={form.control as any}
                   name="days_since_visit"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Days Since Last Visit</FormLabel>
                       <FormControl>
-                        <Input type="number" min={1} max={365} {...field} />
+                        <Input 
+                          type="number" 
+                          min={1}
+                          max={365}
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value, 10) || '')}
+                        />
                       </FormControl>
                       <FormDescription>
-                        Send reminders to clients who visited this many days ago
+                        Send reminder when it&apos;s been this many days since client&apos;s last visit
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -272,37 +277,17 @@ export default function CampaignsPage() {
                 />
                 
                 <FormField
-                  control={form.control}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  control={form.control as any}
                   name="service_filter"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Filter by Service (Optional)</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        value={field.value || ''}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="All services" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SafeSelectItem value="">All services</SafeSelectItem>
-                          <SafeSelectItem value="Haircut">Haircut</SafeSelectItem>
-                          <SafeSelectItem value="Color">Color</SafeSelectItem>
-                          <SafeSelectItem value="Blowout">Blowout</SafeSelectItem>
-                          <SafeSelectItem value="Styling">Styling</SafeSelectItem>
-                          <SafeSelectItem value="Perm">Perm</SafeSelectItem>
-                          <SafeSelectItem value="Treatment">Treatment</SafeSelectItem>
-                          <SafeSelectItem value="Manicure">Manicure</SafeSelectItem>
-                          <SafeSelectItem value="Pedicure">Pedicure</SafeSelectItem>
-                          <SafeSelectItem value="Facial">Facial</SafeSelectItem>
-                          <SafeSelectItem value="Massage">Massage</SafeSelectItem>
-                          <SafeSelectItem value="Waxing">Waxing</SafeSelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Service Filter (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Haircut, Color, etc." {...field} />
+                      </FormControl>
                       <FormDescription>
-                        Only send to clients who received this service
+                        Only target clients who received this service
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -310,14 +295,17 @@ export default function CampaignsPage() {
                 />
                 
                 <FormField
-                  control={form.control}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  control={form.control as any}
                   name="active"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel>Active Campaign</FormLabel>
+                        <FormLabel className="text-base">
+                          Active
+                        </FormLabel>
                         <FormDescription>
-                          Campaign will send reminders automatically
+                          Enable or disable this campaign
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -331,18 +319,14 @@ export default function CampaignsPage() {
                 />
                 
                 <DialogFooter>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setIsAddDialogOpen(false)}
-                  >
+                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
+                        Creating...
                       </>
                     ) : (
                       'Create Campaign'

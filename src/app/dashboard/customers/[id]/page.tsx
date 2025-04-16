@@ -1,13 +1,12 @@
-// Server component - handles param unwrapping and passes to client component
+'use client';
+
+// Client component for dynamic routes in Next.js 15+
 import { CustomerDetailClient } from './client-component';
+import { useParams } from 'next/navigation';
 
-type CustomerDetailPageProps = {
-  params: {
-    id: string;
-  };
-};
-
-export default function CustomerDetailPage({ params }: CustomerDetailPageProps) {
-  // Extract the ID directly at the server component level
-  return <CustomerDetailClient customerId={params.id} />;
+export default function CustomerDetailPage() {
+  const params = useParams();
+  const id = params?.id as string;
+  
+  return <CustomerDetailClient customerId={id} />;
 } 
